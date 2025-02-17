@@ -294,6 +294,11 @@ void new_vif(struct net_bridge_port *p){
 	sprintf(proc_vif[idx].name, "vif%d", (int)vif->id);
 	proc_vif[idx].dir = proc_mkdir(proc_vif[idx].name, proc_root_dir);
 	proc_vif[idx].file[0] = proc_create_data("min_credit",0600, proc_vif[idx].dir, &vif_opt, vif);
+	if (!proc_vif[idx].file[0]) {
+                printk(KERN_ERR "MINKOO: Failed to create min_credit file for vif%d\n", vif->id);
+                return;
+        }
+
 	proc_vif[idx].file[1] = proc_create_data("max_credit",0600, proc_vif[idx].dir, &vif_opt, vif);
 	proc_vif[idx].file[2] = proc_create_data("weight",0600, proc_vif[idx].dir, &vif_opt, vif);
 	proc_vif[idx].file[3] = proc_create_data("remaining_credit",0600, proc_vif[idx].dir, &vif_opt, vif);
@@ -360,13 +365,17 @@ static int __init vif_init(void)
 
 	//make proc directory
 	proc_root_dir = proc_mkdir("oslab", NULL);
-	
+	if (!proc_root_dir) {
+                printk(KERN_ERR "MINKOO: Failed to create /proc/oslab directory\n");
+                return -ENOMEM;
+        }
+
 	//need to implement: traverse off_list and add to CA list
-	//list_for_each_entry_safe(vif, next_vif, &off_list, off_list){
-	//	new_vif(vif);
-	//	printk("MINKOO: vif from off_list\n");
-	//	list_del(&vif->off_list);
-	//}	
+	list_for_each_entry_safe(vif, next_vif, &off_list, off_list){
+		new_vif(vif);
+		printk("MINKOO: vif from off_list\n");
+		list_del(&vif->off_list);
+	}	
 	
 	//setting up timer for callback function
 	timer_setup(&CA->account_timer, credit_accounting, cpu );
