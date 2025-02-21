@@ -11,14 +11,6 @@ static struct proc_dir_entry *proc_root_dir;
 static struct proc_dir_vif proc_vif[64];
 int fileread = 0;
 
-extern void (*fp_newvif)(struct net_bridge_port *p) = new_vif;
-extern void (*fp_delvif)(struct net_bridge_port *p) = del_vif;
-extern int (*fp_pay)(struct ancs_container *vif, struct sk_buff *skb) = pay_credit;
-
-int pay_credit(struct ancs_container *vif, struct sk_buff *skb);
-void new_vif(struct net_bridge_port *p);
-void del_vif(struct net_bridge_port *p);
-
 static void credit_accounting(struct timer_list *timer){
 	struct ancs_container *temp_vif, *next_vif;
 	int total = CA->total_weight;
@@ -371,11 +363,12 @@ static int __init vif_init(void)
         }
 
 	//need to implement: traverse off_list and add to CA list
-	list_for_each_entry_safe(vif, next_vif, &off_list, off_list){
-		new_vif(vif);
-		printk("MINKOO: vif from off_list\n");
-		list_del(&vif->off_list);
-	}	
+	
+	//list_for_each_entry_safe(vif, next_vif, &off_list, off_list){
+	//	new_vif(vif);
+	//	printk("MINKOO: vif from off_list\n");
+	//	list_del(&vif->off_list);
+	//}	
 	
 	//setting up timer for callback function
 	timer_setup(&CA->account_timer, credit_accounting, cpu );
